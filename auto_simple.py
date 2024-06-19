@@ -11,6 +11,7 @@ config_list = [
 
 executor = LocalCommandLineCodeExecutor(work_dir="coding")
 
+# To disable LLM caching, set the cache_seed to None
 assistant = AssistantAgent("assistant", llm_config={"config_list": config_list})
 
 user_proxy = UserProxyAgent(
