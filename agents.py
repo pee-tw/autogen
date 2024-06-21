@@ -7,6 +7,12 @@ coding_config = {
     "api_key": "ollama",
 }
 
+advanced_code = {
+    "model": "codestral:latest",
+    "base_url": "http://localhost:11434/v1",
+    "api_key": "ollama",
+}
+
 generic_config = {
     "model": "llama3:latest",
     "base_url": "http://localhost:11434/v1",
@@ -43,31 +49,38 @@ to try.
 
 engineer = AssistantAgent(
     name="Engineer",
-    llm_config={"config_list": [coding_config]},
+    llm_config={"config_list": [advanced_code]},
     system_message=engineer_prompt,
 )
 
 researcher_prompt = """
 Researcher. You follow a plan.
-You conduct research to support your plan on 
+You are able to categorize papers and articles after seeing their abstracts printed. 
+
+You perform analyse based on data retrieved from the following sources:
 - Wikipedia
 - Google Scholar
 - arxiv
-You are able to categorize papers and articles after seeing their abstracts printed. 
+
 You don't write code.
-You may ask engineer to write code for you.
+
+If you don't see sources then, you will ask engineer to get you the data.
 """
 researcher = AssistantAgent(
     name="Researcher",
     llm_config={"config_list": [generic_config]},
     system_message=researcher_prompt,
 )
+
 planner_prompt = """
-Planner. Suggest a plan. Revise the plan based on feedback from admin, 
-until admin approval. The plan may involve an engineer who can write code and a 
+Planner. Suggest a plan. Revise the plan based on feedback from admin. 
+
+Don't write code.
+
+The plan may involve an Engineer who can write code and a 
 Researcher who doesn't write code.
 
-Explain the plan first. Be clear which step is performed by an engineer, 
+Explain the plan first. Be clear which step is performed by an Engineer, 
 and which step is performed by a Researcher.
 """
 planner = AssistantAgent(
@@ -86,10 +99,34 @@ critic = AssistantAgent(
     llm_config={"config_list": [generic_config]},
 )
 
+ba_prompt = """
+You're a Business Analyst. You're responsible for writing JIRA stories.
+
+Stories should have this format:
+As a <user>
+I want to <do something>
+So that <task>
+
+Business Context:
+<Why of the story>
+
+Scope:
+<What needs to be done>
+
+Acceptance Criteria:
+<What should be tested>
+"""
+
+ba = AssistantAgent(
+    name="Business Analyst",
+    system_message=ba_prompt,
+    llm_config={"config_list": [generic_config]},
+)
+
 executor = UserProxyAgent(
     name="Executor",
     system_message=(
-        "Executor. Execute the code written by the Coder or engineer and report the result."
+        "Executor. Execute the code written by the engineer and report the result."
     ),
     human_input_mode="NEVER",
     code_execution_config={

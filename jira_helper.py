@@ -1,5 +1,5 @@
 from autogen import UserProxyAgent, GroupChat, GroupChatManager
-from agents import engineer, executor, generic_config
+from agents import planner, ba, generic_config
 
 user_proxy = UserProxyAgent(
     name="Admin",
@@ -13,23 +13,15 @@ user_proxy = UserProxyAgent(
 
 def state_transition(last_speaker, groupchat_instance):
     messages = groupchat_instance.messages
-    last_message = messages[-1]["content"]
 
-    if last_speaker is engineer:
-        if "```" in last_message:
-            return executor
-        else:
-            # Otherwise, let the engineer to continue
-            return engineer
-    elif last_speaker is executor:
-        if "Traceback (most recent call last):" in last_message:
-            return engineer
+    if len(messages) <= 1:
+        return planner
 
     return "auto"
 
 
 groupchat = GroupChat(
-    agents=[user_proxy, engineer, executor],
+    agents=[user_proxy, planner, ba],
     messages=[],
     max_round=50,
     allow_repeat_speaker=False,
@@ -40,9 +32,13 @@ manager = GroupChatManager(
 )
 
 chat_message = """
-Write a Python function to draw a christmas tree with colors
+Draft a JIRA story to:
 
-Call the function to print the tree without any arguments
+Create a data pipeline to ingest Google sheet to GCS as parquet files.
+
+The following are the requirements for this task:
+- The pipeline should be idempotent and retryable in case of failure.
+- The pipeline should be able to handle multiple sheets in the same Google sheet file.
 """
 
 

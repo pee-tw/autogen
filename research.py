@@ -25,23 +25,16 @@ def state_transition(last_speaker, groupchat_instance):
     if len(messages) <= 1:
         return planner
 
-    if last_speaker is planner:
-        return researcher
-
     if last_speaker is engineer:
-        if "```python" in last_message:
+        if "```" in last_message:
+            # Contain code, ask executor to run
             return executor
-        else:
-            # Otherwise, let the engineer to continue
-            return engineer
+        # Does not contain code ask engineer to re-write code
+        return engineer
     elif last_speaker is executor:
         if "Traceback (most recent call last):" in last_message:
             return engineer
-        else:
-            return researcher
-
-    if last_speaker is researcher:
-        return user_proxy
+        return researcher
 
     return "auto"
 
@@ -51,6 +44,7 @@ groupchat = GroupChat(
     messages=[],
     max_round=50,
     allow_repeat_speaker=False,
+    send_introductions=True,
     speaker_selection_method=state_transition,
 )
 manager = GroupChatManager(
@@ -60,15 +54,19 @@ manager = GroupChatManager(
 chat_message = """
 Answer the following by looking at economic data from Wikipedia and arXiv:
 
-Thailand is making a loan and giving away 10 thoudsand baht to its citizen but only to those 
+Thailand is making a loan to give away 10 thoudsand baht to its citizen but only to those 
 who has less than 500 thousands baht in savings and earn less than 70 thousand baht 
 per month.
+
+The engineer should ask the executor to write a Python script to fetch the data
+print the results so that other agents can read the result.
 
 Requirement: 
 - Cite data from 5 - 10 papers arXiv.
 - Use economic, demographic and cultural data from Wikipedia.
+- Find similar schemes implemented by other countries.
 
-Draw conclusion base on papers and data.
+Draw conclusion based on papers and data. 
 
 Analyse possible risks and critique whether this is a good action or not.
 """
